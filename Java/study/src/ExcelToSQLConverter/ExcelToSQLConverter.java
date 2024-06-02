@@ -21,6 +21,10 @@ public class ExcelToSQLConverter {
             return parseMaxFunction(formula);
         } else if (formula.startsWith("MIN(")) {
             return parseMinFunction(formula);
+        } else if (formula.startsWith("AVERAGE(")) {
+            return parseAverageFunction(formula);
+        } else if (formula.startsWith("SUM(")) {
+            return parseSumFunction(formula);
         } else {
             return formula;
         }
@@ -78,6 +82,22 @@ public class ExcelToSQLConverter {
         List<String> args = splitArguments(innerArgs);
         String joinedArgs = "TO_DECIMAL(" + String.join("), TO_DECIMAL(", args) + ")";
         return "LEAST(" + joinedArgs + ")";
+    }
+
+    // Function to parse AVERAGE function specifically
+    private static String parseAverageFunction(String formula) {
+        String innerArgs = formula.substring(8, formula.length() - 1); // Extract arguments inside AVERAGE()
+        List<String> args = splitArguments(innerArgs);
+        String joinedArgs = "TO_DECIMAL(" + String.join("), TO_DECIMAL(", args) + ")";
+        return "AVG(" + joinedArgs + ")";
+    }
+
+    // Function to parse SUM function specifically
+    private static String parseSumFunction(String formula) {
+        String innerArgs = formula.substring(4, formula.length() - 1); // Extract arguments inside SUM()
+        List<String> args = splitArguments(innerArgs);
+        String joinedArgs = "TO_DECIMAL(" + String.join("), TO_DECIMAL(", args) + ")";
+        return "SUM(" + joinedArgs + ")";
     }
 
     // Function to parse simple conditions (extendable for more complex ones)
@@ -138,5 +158,13 @@ public class ExcelToSQLConverter {
         String nestedExcelFormula3 = "IF(C1=\"\",IF(C2=\"\",MAX(C3,C4,C5,C6),C2),MIN(C7,C8))";
         String nestedSql3 = convertToSQL(nestedExcelFormula3);
         System.out.println("IF 다중 함수 및 기타 다중 함수 : " + nestedSql3); // Output: (CASE WHEN C1 IS NULL THEN (CASE WHEN C2 IS NULL THEN GREATEST(TO_DECIMAL(C3), TO_DECIMAL(C4), TO_DECIMAL(C5), TO_DECIMAL(C6)) ELSE C2 END) ELSE LEAST(TO_DECIMAL(C7), TO_DECIMAL(C8)) END)
+
+        String nestedExcelFormula4 = "IF(C1=\"\",IF(C2=\"\",MAX(C3,C4,C5,C6),C2),AVERAGE(C7,C8,C9))";
+        String nestedSql4 = convertToSQL(nestedExcelFormula4);
+        System.out.println("IF 다중 함수 및 기타 다중 함수 : " + nestedSql4); // Output: (CASE WHEN C1 IS NULL THEN (CASE WHEN C2 IS NULL THEN GREATEST(TO_DECIMAL(C3), TO_DECIMAL(C4), TO_DECIMAL(C5), TO_DECIMAL(C6)) ELSE C2 END) ELSE AVG(TO_DECIMAL(C7), TO_DECIMAL(C8), TO_DECIMAL(C9)) END)
+
+        String nestedExcelFormula5 = "IF(C1=\"\",IF(C2=\"\",MAX(C3,C4,C5,C6),C2),SUM(C7,C8,C9))";
+        String nestedSql5 = convertToSQL(nestedExcelFormula5);
+        System.out.println("IF 다중 함수 및 기타 다중 함수 : " + nestedSql5); // Output: (CASE WHEN C1 IS NULL THEN (CASE WHEN C2 IS NULL THEN GREATEST(TO_DECIMAL(C3), TO_DECIMAL(C4), TO_DECIMAL(C5), TO_DECIMAL(C6)) ELSE C2 END) ELSE SUM(TO_DECIMAL(C7), TO_DECIMAL(C8), TO_DECIMAL(C9)) END)
     }
 }
